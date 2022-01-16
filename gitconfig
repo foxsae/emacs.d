@@ -1,0 +1,20 @@
+[core]
+	editor = emacs -nw
+[user]
+	email = alex@flyingcastle.net
+	name = Alex Combas
+[diff]
+	tool = ediff
+[difftool]
+	prompt = false
+[merge]
+	tool = emerge
+	conflictstyle = diff3
+[mergetool]
+	prompt = false
+[init]
+	defaultBranch = main
+[color]
+	ui = auto
+[credential]
+	helper = cache
