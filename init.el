@@ -29,11 +29,11 @@
       show-paren-delay 0
       ;; as opposed to doing it another way
       backup-by-copying t
-      ;; do not create lockfiles
+      ;; do not create lockfiles, allows simultaneous editing
       create-lockfiles nil
       ;; kill the entire line, including /n
       kill-whole-line t
-      ;; make display 90 characters wide
+      ;; make display 100 characters wide
       set-fill-column 100
       ;; use python3
       python-shell-interpreter "ipython3"
@@ -73,8 +73,6 @@
 
 ;; I prefer y or n, to yes or no.
 (fset 'yes-or-no-p 'y-or-n-p)
-
-(global-so-long-mode 1)
 
 ;; use Doom-emacs cons improvements for speed-up
 (setq gc-cons-threshold most-positive-fixnum
@@ -148,14 +146,6 @@
 (setq use-package-always-ensure t)
 (setq use-package-verbose t)
 
-;; ;; :hook package will be loaded when  hook invoked
-;; ;; :bind package will be loaded when key binding used
-;; ;; :commands package loaded when a command used
-;; ;; :mode package loaded first time certain file opened
-;; ;; :after loaded after other named package loaded
-;; ;; :defer if other options not used, package loaded after startup
-;; ;; :demand t will force it to load at startup
-
 ;; M-x auto-package-update-now
 (use-package auto-package-update
   :custom
@@ -186,7 +176,7 @@
       version-control t
       vc-make-backup-files t)
 
-;; ;; Turn on line/column numbers everywhere
+;; Turn on line/column numbers everywhere
 (column-number-mode)
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode t)
@@ -355,10 +345,6 @@ global-set-key (kbd "<f6>") 'reload-init)
      (latex . t)
      (shell . t))))
 
-;;(add-hook 'org-mode-hook
-;;          (lambda () (add-hook 'after-save-hook #'org-babel-tangle
-;;                               :append :local)))
-
 (use-package swiper)
 
 (use-package ivy
@@ -424,10 +410,6 @@ global-set-key (kbd "<f6>") 'reload-init)
         doom-themes-enable-italic t))
 
 (use-package all-the-icons)
-
-;; For ibuffer
-;(use-package all-the-icons-ibuffer
-;  :init (all-the-icons-ibuffer-mode 1))
 
 (use-package helpful
   :custom
@@ -504,7 +486,6 @@ global-set-key (kbd "<f6>") 'reload-init)
 
 (use-package python-mode
   :ensure nil
-  ;;:hook (python-mode . lsp-deferred)
   :config
   (require 'dap-python)
   :custom
@@ -528,7 +509,6 @@ global-set-key (kbd "<f6>") 'reload-init)
   :config
   ;; Set this to match your custom shell prompt
   (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")
-  ;;(setq vterm-shell "zsh")
   (setq vterm-max-scrollback 10000)
   (setq vterm-buffer-name-string t))
 
