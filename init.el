@@ -102,7 +102,9 @@
                     (time-subtract after-init-time before-init-time)))
            gcs-done))
 
+;; Initial Screen, *scratch* and agenda-list
 (setq initial-scratch-message (m/display-startup-time))
+(add-hook 'after-init-hook 'org-agenda-list)
 
 (setq-default indicate-buffer-boundaries 'left)
 (setq-default indent-tabs-mode nil)
@@ -135,16 +137,11 @@
                          ("org" . "https://orgmode.org/elpa")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
-;; Update package list if we are on new install
+(package-initialize)
 (unless package-archive-contents
   (package-refresh-contents))
-
-;; A list of pkgs to install
-(setq my-package-list '(use-package))
-
-(dolist (package my-package-list)
-  (unless (package-installed-p package)
-    (package-install package)))
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
 
 ;; Better history
 (setq savehist-file "~/.emacs.d/savehist")
@@ -201,27 +198,41 @@
 (global-set-key (kbd "C-x w") 'elfeed)
 (global-set-key (kbd "M-<f11>") 'toggle-frame-fullscreen)
 
-
+(use-package langtool
+  :ensure t
+  :bind (("C-c v" . 'langtool-check) ; starts the checker
+         ("C-c c" . 'langtool-correct-buffer) ; corrects the buffer
+         ("C-c x" . 'langtool-check-done)) ; ends the checker
+  :init
+  (setq langtool-language-tool-jar
+        "~/Source/LanguageTool-5.6/languagetool-commandline.jar")
+  (setq langtool-default-language "en-CA")
+  (setq langtool-java-user-arguments '("-Dfile.encoding=UTF-8")))
 
 ;; Turn on company-mode globally, then off for some modes
-(add-hook 'after-init-hook 'global-company-mode)
-;; minimal backends
-(setq company-backends '((company-capf company-dabbrev-code company-ispell)))
-;; Show 5 completions max, default 10
-(setq company-tooltip-limit 5)
-(setq company-tooltip-flip-when-above t)
-(setq company-global-modes '(not erc-mode
-                                 message-mode
-                                 eshell-mode
-                                 term-mode
-                                 dired-mode
-                                 org-mode))
+(use-package company
+  :ensure t
+  :config
+  (global-company-mode t)
+  ;;(add-hook 'after-init-hook 'global-company-mode)
+  ;; minimal backends
+  (setq company-backends '((company-capf company-dabbrev-code company-ispell)))
+  ;; Show 5 completions max, default 10
+  (setq company-tooltip-limit 5)
+  (setq company-tooltip-flip-when-above t)
+  (setq company-global-modes '(not erc-mode
+                                   message-mode
+                                   eshell-mode
+                                   term-mode
+                                   dired-mode
+                                   org-mode)))
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'prog-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 
-(use-package nov)
+(use-package nov
+  :ensure t)
 (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
 (setq nov-text-width 100)
 (setq visual-fill-column-center-text t)
@@ -250,6 +261,7 @@
 
 ;; fixed-with for code, variable-width for text
 (use-package mixed-pitch
+  :ensure t
   :hook
   (text-mode . mixed-pitch-mode))
 
@@ -263,19 +275,22 @@
   ((dired-listing-switches "-agho --group-directories-first")))
 
 (use-package dired-hide-dotfiles
+  :ensure t
   :hook (dired-mode . dired-hide-dotfiles-mode)
   :bind (:map dired-mode-map ("H" . dired-hide-dotfiles-mode)))
 
 (use-package dired-open
+  :ensure t
   :config
   (setq dired-open-extensions '(("mkv" . "vlc")
                                 ("mp4" . "vlc"))))
 
 (use-package all-the-icons-dired
+  :ensure t
   :hook (dired-mode . all-the-icons-dired-mode))
 
 (use-package dired-single
-  :ensure nil
+  :ensure t
   :bind
   (([remap dired-find-file] . dired-single-buffer)
    ([remap dired-mouse-find-file-other-window] . dired-single-buffer-mouse)
@@ -283,6 +298,7 @@
 
 ;; Org mode configuration start
 (use-package org
+  :ensure t
   :hook
   (org-mode . flyspell-mode)
   (org-mode . font-lock-mode)
@@ -346,11 +362,12 @@
      (latex . t)
      (shell . t))))
 
-(use-package swiper)
-
 (use-package ivy
+  :ensure t
   :diminish
   :bind (("C-s" . swiper)
+         ("C-r" . swiper)
+         ("C-c C-r" . ivy-resume)
          :map ivy-minibuffer-map
          ("TAB" . ivy-alt-done)
          ("C-n" . ivy-next-line)
@@ -369,7 +386,10 @@
   :after ivy
   :bind (("M-x" . counsel-M-x)
          ("C-x b" . counsel-ibuffer)
+         ("C-x C-b" . counsel-ibuffer)
          ("C-x C-f" . counsel-find-file)
+         ("C-h f" . counsel-describe-function)
+         ("C-h v" . counsel-describe-variable)
          :map minibuffer-local-map
          ("C-r" . 'councel-minibuffer-history))
   :config
@@ -387,13 +407,14 @@
 
 (use-package which-key
   :diminish which-key-mode
-  :config (which-key-setup-side-window-right-bottom)
   :init (which-key-mode 1))
 
 (use-package rainbow-delimiters
+  :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package rainbow-mode
+  :ensure t
   :hook (prog-mode . rainbow-mode))
 
 (show-paren-mode)
@@ -422,21 +443,6 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
 
-(use-package projectile
-  :diminish projectile-mode
-  :config (projectile-mode)
-  :custom ((projectile-completion-system 'ivy))
-  :bind-keymap
-  ("C-c p" . projectile-command-map)
-  :init
-  (when (file-directory-p "~/Projects/Code")
-    (setq projectile-project-search-path '("~/Projects/Code")))
-  (setq projectile-switch-project-action #'projectile-dired))
-
-(use-package counsel-projectile
-  :after projectile
-  :config (counsel-projectile-mode))
-
 (use-package magit
   :bind (("C-x g" . magit-status))
   :custom
@@ -464,16 +470,7 @@
 (use-package palimpsest)
 (add-hook 'text-mode-hook 'palimpsest-mode)
 
-(use-package dap-mode
-  :config
-  (require 'dap-python))
-
-(use-package eldoc
-  :diminish eldoc-mode
-  :hook (prog-mode . eldoc-mode))
-
 (use-package treemacs)
-(use-package lsp-treemacs)
 
 (use-package ace-window
   :ensure t
@@ -484,26 +481,6 @@
               aw-scope 'frame)
   :bind (("M-o" . ace-window)
          ("M-O" . ace-swap-window)))
-
-(use-package python-mode
-  :ensure nil
-  :config
-  (require 'dap-python)
-  :custom
-  (dap-python-debugger 'debugpy))
-
-(use-package pyvenv
-  :after python-mode
-  :init
-  (setenv "WORKON_HOME" "~/.venvs/")
-  :config
-  (pyvenv-mode 1))
-
-(use-package lsp-pyright
-  :after python-mode
-  :hook
-  (python-mode . (lambda ()
-                   (require 'lsp-pyright) (lsp))))
 
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
