@@ -7,9 +7,6 @@
 (setq user-full-name "Alex Combas"
       user-email-address "alex@flyingcastle.net")
 
-(setq auth-sources '("~/.authinfo.gpg")
-      auth-source-cache-expiry nil) ; default is 7200 (2h)
-
 (setq inhibit-startup-message t ; turn off emacs startup file
       ;; as opposed to an audio-beep
       visible-bell t
@@ -131,29 +128,23 @@
 (set-selection-coding-system 'utf-8)
 (prefer-coding-system 'utf-8)
 
+;; Setup Use Package
 (require 'package)
 
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
-(unless (and (fboundp 'package-installed-p)
-             (package-installed-p 'use-package))
-  ;;(package-initialize)
-  (package-refresh-contents)
-  (package-install 'use-package))
+;; Update package list if we are on new install
+(unless package-archive-contents
+  (package-refresh-contents))
 
-(setq use-package-always-ensure t)
-(setq use-package-verbose t)
+;; A list of pkgs to install
+(setq my-package-list '(use-package))
 
-;; M-x auto-package-update-now
-(use-package auto-package-update
-  :custom
-  (auto-package-update-interval 28)
-  (auto-package-update-prompt-before-update t)
-  (auto-package-update-delete-old-versions t)
-  :config
-  (auto-package-update-maybe))
+(dolist (package my-package-list)
+  (unless (package-installed-p package)
+    (package-install package)))
 
 ;; Better history
 (setq savehist-file "~/.emacs.d/savehist")
@@ -193,21 +184,24 @@
 (autoload 'zap-up-to-char "misc"
   "Kill up to, but not including ARGth occurance of CHAR." t)
 
+;; Reload Emacs Init file with F6
+(defun reload-init ()
+  (interactive)
+  (load-file "~/.emacs.d/init.el"))
+
+;; hot keys
+(global-set-key (kbd "<f6>") 'reload-init)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 (global-set-key (kbd "C-s") 'isearch-forward-regexp)
 (global-set-key (kbd "C-r") 'isearch-backward-regexp)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-(global-set-key (kbd "<f1>") 'vterm)
 (global-set-key (kbd "C-c l") 'org-store-line)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
 (global-set-key (kbd "C-x w") 'elfeed)
 (global-set-key (kbd "M-<f11>") 'toggle-frame-fullscreen)
 
-(defun reload-init ()
-  (interactive)
-  (load-file "~/.emacs.d/init.el"))(
-global-set-key (kbd "<f6>") 'reload-init)
+
 
 ;; Turn on company-mode globally, then off for some modes
 (add-hook 'after-init-hook 'global-company-mode)
@@ -219,7 +213,6 @@ global-set-key (kbd "<f6>") 'reload-init)
 (setq company-global-modes '(not erc-mode
                                  message-mode
                                  eshell-mode
-                                 vterm-mode
                                  term-mode
                                  dired-mode
                                  org-mode))
@@ -227,6 +220,14 @@ global-set-key (kbd "<f6>") 'reload-init)
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'prog-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
+
+(use-package nov)
+(add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+(setq nov-text-width 100)
+(setq visual-fill-column-center-text t)
+(add-hook 'nov-mode-hook 'visual-line-mode)
+(add-hook 'nov-mode-hook 'visual-fill-column-mode)
+
 
 ;; elfeed news reader feeds
 (setq elfeed-feeds
@@ -267,8 +268,8 @@ global-set-key (kbd "<f6>") 'reload-init)
 
 (use-package dired-open
   :config
-  (setq dired-open-extensions '(("mkv" . "mpv")
-                                ("mp4" . "mpv"))))
+  (setq dired-open-extensions '(("mkv" . "vlc")
+                                ("mp4" . "vlc"))))
 
 (use-package all-the-icons-dired
   :hook (dired-mode . all-the-icons-dired-mode))
@@ -503,26 +504,6 @@ global-set-key (kbd "<f6>") 'reload-init)
   :hook
   (python-mode . (lambda ()
                    (require 'lsp-pyright) (lsp))))
-
-(use-package vterm
-  :custom (vterm-kill-buffer-on-exit t)
-  :config
-  ;; Set this to match your custom shell prompt
-  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *")
-  (setq vterm-max-scrollback 10000)
-  (setq vterm-buffer-name-string t))
-
-;; Counsel-yank-pop in vterm
-(defun vterm-counsel-yank-pop-action (orig-fun &rest args)
-  (if (equal major-mode 'vterm-mode)
-      (let ((inhibit-read-only t)
-            (yank-undo-function (lambda (_start _end) (vterm-undo))))
-        (cl-letf (((symbol-function 'insert-for-yank)
-                   (lambda (str) (vterm-send-string str t))))
-          (apply orig-fun args)))
-    (apply orig-fun args)))
-
-(advice-add 'counsel-yank-pop-action :around #'vterm-counsel-yank-pop-action)
 
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
