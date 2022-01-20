@@ -239,7 +239,6 @@
 (add-hook 'nov-mode-hook 'visual-line-mode)
 (add-hook 'nov-mode-hook 'visual-fill-column-mode)
 
-
 ;; elfeed news reader feeds
 (setq elfeed-feeds
       '(("https://planet.emacslife.com/atom.xml" planet emacs)
@@ -343,11 +342,16 @@
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
-(use-package visual-fill
+(use-package visual-fill-column
+  :ensure t
   :init
-  (setq visual-fill-column-width 100)
-  (setq visual-fill-column-center-text t)
-  :hook (org-mode . visual-fill-column-mode))
+  (setq-default visual-fill-column-width 100)
+  (setq-default visual-fill-column-center-text t)
+  (setq-default visual-fill-column-enable-sensible-window-split t)
+  (setq-default visual-fill-column-fringes-outside-margins t)
+  :hook
+  (org-mode . visual-fill-column-mode)
+  (visual-line-mode-hook . visual-fill-column-mode))
 
 (use-package org-variable-pitch
   :hook (org-mode . variable-pitch-mode))
