@@ -1,9 +1,6 @@
 ;;;; init.el -*- lexical-binding: t; -*-
 
-;; Keep custom settings separate
-(setq custom-file "~/.emacs.d/custom.el")
-(load custom-file t)
-
+;; "I am Gandalf, and Gandalf means me"
 (setq user-full-name "Alex Combas"
       user-email-address "alex@flyingcastle.net")
 
@@ -44,6 +41,10 @@
       delete-by-moving-to-trash t
 )
 
+;; Keep custom settings separate
+(setq custom-file "~/.emacs.d/custom.el")
+(load custom-file t)
+
 ;; remove pointless ui features
 (scroll-bar-mode -1)
 (horizontal-scroll-bar-mode -1)
@@ -51,7 +52,9 @@
 (menu-bar-mode -1)
 (pixel-scroll-precision-mode)
 (display-time-mode 1)
+(show-paren-mode)
 
+;; set initial emacs window size
 (when window-system
   (set-frame-size (selected-frame) 100 45))
 
@@ -71,39 +74,44 @@
 ;; I prefer y or n, to yes or no.
 (fset 'yes-or-no-p 'y-or-n-p)
 
-;; use Doom-emacs cons improvements for speed-up
+;; Doom-emacs cons trick
+;; disable gcs during startup
 (setq gc-cons-threshold most-positive-fixnum
       gc-cons-percentage 0.6)
+
+;; turn on gcs after startup
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq gc-cons-threshold 16777216 ; 16mb
                   gc-cons-percentage 0.1)))
 
-(defun doom-defer-garbage-collection-h ()
+;; all defun inside init.el start with ac
+(defun ac-defer-garbage-collection-h ()
+  ;; Set gcs value to highest fixnum value
   (setq gc-cons-threshold most-positive-fixnum))
 
-(defun doom-restore-garbage-collection-h ()
-  ;; Defer it so that commands launched immediately after
-  ;; will enjoy the benefits.
+(defun ac-restore-garbage-collection-h ()
+  ;; Set gcs to 16mb
   (run-at-time
    1 nil (lambda () (setq gc-cons-threshold 16777216
                           gc-cons-percentage 0.1))))
 
-;; turn off garbage collection while in the mini-buffer
-;; but restore it afterwards
-(add-hook 'minibuffer-setup-hook #'doom-defer-garbage-collection-h)
-(add-hook 'minibuffer-exit-hook #'doom-restore-garbage-collection-h)
+;; turn off gcs when entering minibuffer
+(add-hook 'minibuffer-setup-hook #'ac-defer-garbage-collection-h)
 
-;; Display startup time and gcs in initial scratch msg
-(defun m/display-startup-time ()
+;; turn on gcs after exiting minibuffer
+(add-hook 'minibuffer-exit-hook #'ac-restore-garbage-collection-h)
+
+(defun ac-display-startup-time ()
+  ;; Display load-time and gcs amount in scratch buffer
   (message "Emacs loaded in %s with %d garbage collections."
            (format "%.2f seconds"
                    (float-time
                     (time-subtract after-init-time before-init-time)))
            gcs-done))
 
-;; Initial Screen, *scratch* and agenda-list
-(setq initial-scratch-message (m/display-startup-time))
+;; set initial screens
+(setq initial-scratch-message (ac-display-startup-time))
 (add-hook 'after-init-hook 'org-agenda-list)
 
 (setq-default indicate-buffer-boundaries 'left)
@@ -116,12 +124,12 @@
 (add-hook 'before-save-hook
           (lambda() (delete-trailing-whitespace)))
 
-(defun remove-dos-eol ()
+(defun ac-remove-dos-eol ()
   "Do not show ^M in files containing mixed line endings."
   (interactive)
   (setq buffer-display-table (make-display-table))
   (aset buffer-display-table ?\^M []))
-(add-hook 'text-mode-hook 'remove-dos-eol)
+(add-hook 'text-mode-hook 'ac-remove-dos-eol)
 
 (set-language-environment 'utf-8)
 (set-terminal-coding-system 'utf-8)
@@ -181,13 +189,23 @@
 (autoload 'zap-up-to-char "misc"
   "Kill up to, but not including ARGth occurance of CHAR." t)
 
-;; Reload Emacs Init file with F6
-(defun reload-init ()
+(defun ac-insert-date()
+  ;; Make inserting the date easier C-c i d
+  (interactive)
+  (insert (format-time-string "%x")))
+
+(defun ac-insert-time()
+  ;; Make inserting the time easier C-c i t
+  (interactive)
+  (insert (format-time-string "%X")))
+
+(defun ac-reload-init ()
+  ;; Make reloading ~/.emacs.d/init.el easier <f6>
   (interactive)
   (load-file "~/.emacs.d/init.el"))
 
 ;; hot keys
-(global-set-key (kbd "<f6>") 'reload-init)
+(global-set-key (kbd "<f6>") 'ac-reload-init)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 (global-set-key (kbd "C-s") 'isearch-forward-regexp)
 (global-set-key (kbd "C-r") 'isearch-backward-regexp)
@@ -197,6 +215,8 @@
 (global-set-key (kbd "C-c c") 'org-capture)
 (global-set-key (kbd "C-x w") 'elfeed)
 (global-set-key (kbd "M-<f11>") 'toggle-frame-fullscreen)
+(global-set-key (kbd "C-c i d") 'ac-insert-date)
+(global-set-key (kbd "C-c i t") 'ac-insert-time)
 
 (use-package langtool
   :ensure t
@@ -255,7 +275,8 @@
 (add-hook 'Info-selection-hook 'info-colors-fontify-node)
 
 ;; for editing .yml files
-(require 'yaml-mode)
+(use-package yaml-mode
+  :ensure t)
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 
 ;; fixed-with for code, variable-width for text
@@ -299,7 +320,6 @@
 (use-package org
   :ensure t
   :hook
-  (org-mode . flyspell-mode)
   (org-mode . font-lock-mode)
   (org-mode . visual-line-mode))
 
@@ -336,8 +356,8 @@
               ("DONE" :foreground "green" :weight bold)
               ("CANCELED" :foreground "green" :weight bold))))
 
-
 (use-package org-bullets
+  :ensure t
   :hook (org-mode . org-bullets-mode)
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
@@ -354,6 +374,7 @@
   (visual-line-mode-hook . visual-fill-column-mode))
 
 (use-package org-variable-pitch
+  :ensure t
   :hook (org-mode . variable-pitch-mode))
 
 (with-eval-after-load 'org
@@ -401,15 +422,16 @@
   (counsel-mode 1))
 
 (use-package ivy-rich
+  :ensure t
   :after ivy
   :init (ivy-rich-mode 1))
 
 (use-package all-the-icons-ivy-rich
+  :ensure t
   :init (all-the-icons-ivy-rich-mode 1))
 
-(use-package lsp-ivy)
-
 (use-package which-key
+  :ensure t
   :diminish which-key-mode
   :init (which-key-mode 1))
 
@@ -421,23 +443,25 @@
   :ensure t
   :hook (prog-mode . rainbow-mode))
 
-(show-paren-mode)
-
 (use-package doom-modeline
+  :ensure t
   :init
   (doom-modeline-mode 1)
   (setq doom-modeline-lsp t))
 
 (use-package doom-themes
+  :ensure t
   :init
   (load-theme 'doom-material-dark t)
   :config
   (setq doom-themes-enable-bold t
         doom-themes-enable-italic t))
 
-(use-package all-the-icons)
+(use-package all-the-icons
+  :ensure t)
 
 (use-package helpful
+  :ensure t
   :custom
   (counsel-describe-function-function #'helpful-callable)
   (counsel-describe-variable-function #'helpful-callable)
@@ -448,17 +472,21 @@
   ([remap describe-key] . helpful-key))
 
 (use-package magit
+  :ensure t
   :bind (("C-x g" . magit-status))
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
 (use-package magit-popup
+  :ensure t
   :after magit)
 
 (use-package forge
+  :ensure t
   :after magit)
 
 (use-package multiple-cursors
+  :ensure t
   :config
   (define-key mc/keymap (kbd "<return>") nil)
   :bind (("C-S-c C-S-c" . mc/edit-lines)
@@ -467,14 +495,19 @@
          ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 
-(use-package no-littering)
+(use-package no-littering
+  :ensure t)
 
-(use-package writeroom-mode)
+(use-package writeroom-mode
+  :ensure t)
 
-(use-package palimpsest)
-(add-hook 'text-mode-hook 'palimpsest-mode)
+(use-package palimpsest
+  :ensure t
+  :hook
+  (text-mode . palimpsest-mode))
 
-(use-package treemacs)
+(use-package treemacs
+  :ensure t)
 
 (use-package ace-window
   :ensure t
@@ -487,9 +520,11 @@
          ("M-O" . ace-swap-window)))
 
 (use-package eterm-256color
+  :ensure t
   :hook (term-mode . eterm-256color-mode))
 
-(defun m/configure-eshell()
+(defun ac-configure-eshell()
+  ;; Personal Eshell setttings
   (add-hook 'eshell-pre-command-hook 'eshell-save-some-history)
   (add-to-list 'eshell-output-filter-functions
                'eshell-truncate-buffer)
@@ -499,11 +534,12 @@
         eshell-scroll-to-bottom-on-input t))
 
 (use-package eshell-git-prompt
+  :ensure t
   :after eshell)
 
 (use-package eshell
   :ensure nil
-  :hook (eshell-first-time-mode . m/configure-eshell)
+  :hook (eshell-first-time-mode . ac-configure-eshell)
   :config
   (with-eval-after-load 'esh-opt
     (setq eshell-destroy-buffer-when-process-dies t)
@@ -512,7 +548,7 @@
   (eshell-git-prompt-use-theme 'powerline))
 
 (use-package slime
-  :ensure nil
+  :ensure t
   :config
   (slime-setup '(slime-fancy slime-company))
   (setq slime-lisp-implementation '((sbcl ("sbcl")))
@@ -520,6 +556,7 @@
         slime-contribs '(slime-fancy)))
 
 (use-package slime-company
+  :ensure t
   :after (slime company)
   :config (setq slime-company-completion 'fuzzy
                 slime-company-after-completion
