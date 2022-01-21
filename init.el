@@ -55,10 +55,6 @@
 (display-time-mode 1)
 (show-paren-mode)
 
-;; set initial emacs window size
-(when window-system
-  (set-frame-size (selected-frame) 100 45))
-
 ;; turn on fringes, left 10, right 0
 (set-fringe-mode '(10 . 0))
 
@@ -102,18 +98,6 @@
 
 ;; turn on gcs after exiting minibuffer
 (add-hook 'minibuffer-exit-hook #'ac-restore-garbage-collection-h)
-
-(defun ac-display-startup-time ()
-  ;; Display load-time and gcs amount in scratch buffer
-  (message "Emacs loaded in %s with %d garbage collections."
-           (format "%.2f seconds"
-                   (float-time
-                    (time-subtract after-init-time before-init-time)))
-           gcs-done))
-
-;; set initial screens
-(setq initial-scratch-message (ac-display-startup-time))
-(add-hook 'after-init-hook 'org-agenda-list)
 
 (setq-default indicate-buffer-boundaries 'left)
 (setq-default indent-tabs-mode nil)
@@ -595,3 +579,8 @@
   :ensure t
   :after erc
   :config (global-emojify-mode))
+
+(use-package dashboard
+  :ensure t
+  :config
+  (dashboard-setup-startup-hook))
