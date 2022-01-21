@@ -230,9 +230,10 @@
 
 (use-package langtool
   :ensure t
-  :bind (("C-c v" . 'langtool-check) ; starts the checker
-         ("C-c c" . 'langtool-correct-buffer) ; corrects the buffer
-         ("C-c x" . 'langtool-check-done)) ; ends the checker
+  :bind
+  (("C-c v" . 'langtool-check) ; starts the checker
+   ("C-c c" . 'langtool-correct-buffer) ; corrects the buffer
+   ("C-c x" . 'langtool-check-done)) ; ends the checker
   :config
   (setq langtool-language-tool-jar
         "~/Source/LanguageTool-5.6/languagetool-commandline.jar")
@@ -259,13 +260,17 @@
 (add-hook 'prog-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 
+;; nov ebook reader
 (use-package nov
-  :ensure t)
-(add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
-(setq nov-text-width 100)
-(setq visual-fill-column-center-text t)
-(add-hook 'nov-mode-hook 'visual-line-mode)
-(add-hook 'nov-mode-hook 'visual-fill-column-mode)
+  :ensure t
+  :init (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+  :config
+  (setq nov-text-width 100)
+  (setq visual-fill-column-center-text t)
+  :hook
+  (nov-mode . visual-line-mode)
+  (nov-mode . visual-fill-column-mode)
+  )
 
 ;; elfeed news reader feeds
 (setq elfeed-feeds
@@ -284,22 +289,21 @@
 
 ;; for editing .yml files
 (use-package yaml-mode
-  :ensure t)
-(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+  :ensure t
+  :init (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
 
 ;; fixed-with for code, variable-width for text
 (use-package mixed-pitch
   :ensure t
-  :hook
-  (text-mode . mixed-pitch-mode))
+  :hook (text-mode . mixed-pitch-mode))
 
 (use-package dired
   :ensure nil
-  :bind (("C-x C-j" . dired-jump)
-         (:map dired-mode-map ("f" . dired-single-buffer))
-         (:map dired-mode-map ("b" . dired-single-up-directory)))
-  :custom
-  ((dired-listing-switches "-agho --group-directories-first")))
+  :bind
+  (("C-x C-j" . dired-jump)
+   (:map dired-mode-map ("f" . dired-single-buffer))
+   (:map dired-mode-map ("b" . dired-single-up-directory)))
+  :custom ((dired-listing-switches "-agho --group-directories-first")))
 
 (use-package dired-hide-dotfiles
   :ensure t
@@ -328,46 +332,39 @@
   :ensure t
   :hook
   (org-mode . font-lock-mode)
-  (org-mode . visual-line-mode))
-
-(setq org-cycle-separator-lines -1)
-(setq org-startup-indented t)
-(setq org-startup-folded nil)
-(setq org-hide-emphasis-markers t)
-(setq org-agenda-start-with-log-mode t)
-(setq org-log-done 'time)
-(setq org-log-into-drawer t)
-(setq org-src-fontify-natively t)
-(setq org-src-tab-acts-natively t)
-(setq org-use-effective-time t)
-
-(setq org-agenda-files '("~/Org/Tasks.org"
-                         "~/Org/Habits.org"))
-
-(setq org-tag-persistent-alist '(("@errand" . ?e)
-                                 ("@home" . ?h)
-                                 ("@work" . ?w)
-                                 ("@note" . ?n)))
-
-(advice-add 'org-refile :after 'org-save-all-org-buffers)
-
-(setq org-refile-targets '(("Archive.org" :maxlevel . 1)
-                           ("Tasks.org" :maxlevel . 1)))
-
-(setq org-todo-keywords
-      '((sequence "TODO(t)" "IN-PROGRESS(i)" "|" "DONE(d!)" "CANCELLED(c@)")))
-
-(setq org-todo-keyword-faces
-      (quote (("TODO" :foreground "red" :weight bold)
-              ("IN-PROGRESS" :foreground "orange" :weight bold)
-              ("DONE" :foreground "green" :weight bold)
-              ("CANCELED" :foreground "green" :weight bold))))
+  (org-mode . visual-line-mode)
+  :config
+  (setq org-cycle-separator-lines -1)
+  (setq org-startup-indented t)
+  (setq org-startup-folded nil)
+  (setq org-hide-emphasis-markers t)
+  (setq org-agenda-start-with-log-mode t)
+  (setq org-log-done 'time)
+  (setq org-log-into-drawer t)
+  (setq org-src-fontify-natively t)
+  (setq org-src-tab-acts-natively t)
+  (setq org-use-effective-time t)
+  (setq org-agenda-files '("~/Org/Tasks.org"
+                           "~/Org/Habits.org"))
+  (setq org-tag-persistent-alist '(("@errand" . ?e)
+                                   ("@home" . ?h)
+                                   ("@work" . ?w)
+                                   ("@note" . ?n)))
+  (advice-add 'org-refile :after 'org-save-all-org-buffers)
+  (setq org-refile-targets '(("Archive.org" :maxlevel . 1)
+                             ("Tasks.org" :maxlevel . 1)))
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "IN-PROGRESS(i)" "|" "DONE(d!)" "CANCELLED(c@)")))
+  (setq org-todo-keyword-faces
+        (quote (("TODO" :foreground "red" :weight bold)
+                ("IN-PROGRESS" :foreground "orange" :weight bold)
+                ("DONE" :foreground "green" :weight bold)
+                ("CANCELED" :foreground "green" :weight bold)))))
 
 (use-package org-bullets
   :ensure t
-  :hook (org-mode . org-bullets-mode)
-  :custom
-  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+  :hook (org-mode . org-bullets-mode))
+;;  :config (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
 (use-package visual-fill-column
   :ensure t
@@ -378,7 +375,7 @@
   (setq-default visual-fill-column-fringes-outside-margins t)
   :hook
   (org-mode . visual-fill-column-mode)
-  (visual-line-mode-hook . visual-fill-column-mode))
+  (visual-line-mode . visual-fill-column-mode))
 
 (use-package org-variable-pitch
   :ensure t
@@ -459,10 +456,10 @@
   (counsel-describe-function-function #'helpful-callable)
   (counsel-describe-variable-function #'helpful-callable)
   :bind
-  ([remap describe-function] . counsel-describe-function)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . counsel-describe-variable)
-  ([remap describe-key] . helpful-key))
+  (([remap describe-function] . counsel-describe-function)
+   ([remap describe-command] . helpful-command)
+   ([remap describe-variable] . counsel-describe-variable)
+   ([remap describe-key] . helpful-key)))
 
 (use-package magit
   :ensure t
@@ -480,13 +477,13 @@
 
 (use-package multiple-cursors
   :ensure t
-  :config
-  (define-key mc/keymap (kbd "<return>") nil)
-  :bind (("C-S-c C-S-c" . mc/edit-lines)
-         ("C->" . mc/mark-next-like-this)
-         ("C-<" . mc/mark-previous-like-this)
-         ("C-c C-<" . mc/mark-all-like-this)
-         ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
+  :config (define-key mc/keymap (kbd "<return>") nil)
+  :bind
+  (("C-S-c C-S-c" . mc/edit-lines)
+   ("C->" . mc/mark-next-like-this)
+   ("C-<" . mc/mark-previous-like-this)
+   ("C-c C-<" . mc/mark-all-like-this)
+   ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 
 (use-package no-littering
   :ensure t)
@@ -496,8 +493,7 @@
 
 (use-package palimpsest
   :ensure t
-  :hook
-  (text-mode . palimpsest-mode))
+  :hook (text-mode . palimpsest-mode))
 
 (use-package treemacs
   :ensure t)
@@ -510,8 +506,9 @@
               aw-ignore-current nil
               aw-leading-char-style 'char
               aw-scope 'frame)
-  :bind (("M-o" . ace-window)
-         ("M-O" . ace-swap-window)))
+  :bind
+  (("M-o" . ace-window)
+   ("M-O" . ace-swap-window)))
 
 (use-package eterm-256color
   :ensure t
@@ -538,7 +535,6 @@
   (with-eval-after-load 'esh-opt
     (setq eshell-destroy-buffer-when-process-dies t)
     (setq eshell-visual-commands '("htop" "zsh" "vim")))
-
   (eshell-git-prompt-use-theme 'powerline))
 
 (use-package slime
@@ -552,6 +548,6 @@
 (use-package slime-company
   :ensure t
   :after (slime company)
-  :config (setq slime-company-completion 'fuzzy
-                slime-company-after-completion
-                'slime-company-just-one-space))
+  :config
+  (setq slime-company-completion 'fuzzy
+        slime-company-after-completion 'slime-company-just-one-space))
