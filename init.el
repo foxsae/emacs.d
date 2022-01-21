@@ -4,6 +4,8 @@
 (setq user-full-name "Alex Combas"
       user-email-address "alex@flyingcastle.net")
 
+(setq auth-sources '("~/.authinfo.gpg"))
+
 (setq inhibit-startup-message t ; turn off emacs startup file
       ;; as opposed to an audio-beep
       visible-bell t
@@ -130,18 +132,22 @@
   (aset buffer-display-table ?\^M []))
 (add-hook 'text-mode-hook 'ac-remove-dos-eol)
 
+;; Set all-the-things to UTF-8
 (set-language-environment 'utf-8)
 (set-terminal-coding-system 'utf-8)
-(setq locale-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
 (set-selection-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
 (prefer-coding-system 'utf-8)
+(setq locale-coding-system 'utf-8)
+(setq default-file-name-coding-system 'utf-8)
+(setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRGIN))
 
 ;; Setup Use Package
 (require 'package)
 
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa")
+                         ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
 (package-initialize)
@@ -297,35 +303,49 @@
   :ensure t
   :hook (text-mode . mixed-pitch-mode))
 
+;; use dired-single for dired
 (use-package dired
   :ensure nil
   :bind
   (("C-x C-j" . dired-jump)
    (:map dired-mode-map ("f" . dired-single-buffer))
    (:map dired-mode-map ("b" . dired-single-up-directory)))
-  :custom ((dired-listing-switches "-agho --group-directories-first")))
+  :custom ((dired-listing-switches "-agho
+  --group-directories-first")))
 
+;; use ! to call xdg-open on any file in dired
+(use-package dired-x
+  :ensure nil
+  :after dired
+  :config
+  (setq dired-guess-shell-alist-user '(("" "xdg-open"))))
+
+;; use H to hide dot files when in dired
 (use-package dired-hide-dotfiles
   :ensure t
   :hook (dired-mode . dired-hide-dotfiles-mode)
   :bind (:map dired-mode-map ("H" . dired-hide-dotfiles-mode)))
 
-(use-package dired-open
-  :ensure t
-  :config
-  (setq dired-open-extensions '(("mkv" . "vlc")
-                                ("mp4" . "vlc"))))
-
+;; nicer icons for dired
 (use-package all-the-icons-dired
   :ensure t
   :hook (dired-mode . all-the-icons-dired-mode))
 
+;; loads when dired loads, remaps to use dired-single
+(defun ac-dired-init ()
+  (interactive)
+  (define-key dired-mode-map [remap dired-find-file]
+              'dired-single-buffer)
+  (define-key dired-mode-map [remap
+                              dired-mousej-find-file-other-window]
+              'dired-single-buffer-mouse)
+  (define-key dired-mode-map [remap dired-up-directory] ' dired-single-up-directory))
+
+;; turn dired into a single buffer applicaiton
 (use-package dired-single
   :ensure t
-  :bind
-  (([remap dired-find-file] . dired-single-buffer)
-   ([remap dired-mouse-find-file-other-window] . dired-single-buffer-mouse)
-   ([remap dired-up-directory] . dired-single-up-directory)))
+  :hook
+  (dired-mode . ac-dired-init))
 
 ;; Org mode configuration start
 (use-package org
@@ -363,8 +383,9 @@
 
 (use-package org-bullets
   :ensure t
-  :hook (org-mode . org-bullets-mode))
-;;  :config (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+  :hook (org-mode . org-bullets-mode)
+  :config
+  (setq org-bullets-bullet-list '("◉" "⁑" "⁂" "❖" "✮" "✱" "✸")))
 
 (use-package visual-fill-column
   :ensure t
@@ -417,8 +438,6 @@
          ("C-x b" . counsel-ibuffer)
          ("C-x C-b" . counsel-ibuffer)
          ("C-x C-f" . counsel-find-file)
-         ("C-h f" . counsel-describe-function)
-         ("C-h v" . counsel-describe-variable)
          :map minibuffer-local-map
          ("C-r" . 'councel-minibuffer-history))
   :config
@@ -436,7 +455,7 @@
 
 (use-package which-key
   :ensure t
-  :diminish which-key-mode
+  :diminish
   :config (which-key-mode 1))
 
 (use-package rainbow-delimiters
@@ -474,16 +493,6 @@
 (use-package forge
   :ensure t
   :after magit)
-
-(use-package multiple-cursors
-  :ensure t
-  :config (define-key mc/keymap (kbd "<return>") nil)
-  :bind
-  (("C-S-c C-S-c" . mc/edit-lines)
-   ("C->" . mc/mark-next-like-this)
-   ("C-<" . mc/mark-previous-like-this)
-   ("C-c C-<" . mc/mark-all-like-this)
-   ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
 
 (use-package no-littering
   :ensure t)
@@ -551,3 +560,38 @@
   :config
   (setq slime-company-completion 'fuzzy
         slime-company-after-completion 'slime-company-just-one-space))
+
+(use-package erc
+  :custom
+  (erc-autojoin-channels-alist '(("freenode.net" "#emacs")))
+  (erc-autojoin-timing 'indent)
+  (erc-fill-function 'erc-fill-static)
+  (erc-fill-static-center 22)
+  (erc-hide-list '("JOIN" "PART" "QUIT"))
+  (erc-lurker-hide-list '("JOIN" "PART" "QUIT"))
+  (erc-lurker-threshold-time 43200)
+  (erc-prompt-for-nickserv-password nil)
+  (erc-server-reconnect-attempts 5)
+  (erc-server-reconnect-timeout 3)
+  (erc-track-exclude-types '("JOIN" "MODE" "NICK" "PART" "QUIT"
+                             "324" "329" "332" "333" "353" "477"))
+  (erc-interpret-mirc-color t)
+  :config
+  (add-to-list 'erc-modules 'notifications)
+  (add-to-list 'erc-modules 'spelling)
+  (add-to-list 'erc-modules 'image)
+  (erc-services-mode 1)
+  (erc-update-modules))
+
+(use-package erc-hl-nicks
+  :ensure t
+  :after erc)
+
+(use-package erc-image
+  :ensure t
+  :after erc)
+
+(use-package emojify
+  :ensure t
+  :after erc
+  :config (global-emojify-mode))
