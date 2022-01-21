@@ -49,7 +49,6 @@
 (scroll-bar-mode -1)
 (horizontal-scroll-bar-mode -1)
 (tool-bar-mode -1)
-(menu-bar-mode -1)
 (pixel-scroll-precision-mode)
 (display-time-mode 1)
 (show-paren-mode)
@@ -218,12 +217,23 @@
 (global-set-key (kbd "C-c i d") 'ac-insert-date)
 (global-set-key (kbd "C-c i t") 'ac-insert-time)
 
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
+
+(use-package doom-themes
+  :ensure t
+  :init (load-theme 'doom-material-dark t)
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t))
+
 (use-package langtool
   :ensure t
   :bind (("C-c v" . 'langtool-check) ; starts the checker
          ("C-c c" . 'langtool-correct-buffer) ; corrects the buffer
          ("C-c x" . 'langtool-check-done)) ; ends the checker
-  :init
+  :config
   (setq langtool-language-tool-jar
         "~/Source/LanguageTool-5.6/languagetool-commandline.jar")
   (setq langtool-default-language "en-CA")
@@ -234,8 +244,6 @@
   :ensure t
   :config
   (global-company-mode t)
-  ;;(add-hook 'after-init-hook 'global-company-mode)
-  ;; minimal backends
   (setq company-backends '((company-capf company-dabbrev-code company-ispell)))
   ;; Show 5 completions max, default 10
   (setq company-tooltip-limit 5)
@@ -287,7 +295,6 @@
 
 (use-package dired
   :ensure nil
-  :init
   :bind (("C-x C-j" . dired-jump)
          (:map dired-mode-map ("f" . dired-single-buffer))
          (:map dired-mode-map ("b" . dired-single-up-directory)))
@@ -364,7 +371,7 @@
 
 (use-package visual-fill-column
   :ensure t
-  :init
+  :config
   (setq-default visual-fill-column-width 100)
   (setq-default visual-fill-column-center-text t)
   (setq-default visual-fill-column-enable-sensible-window-split t)
@@ -424,16 +431,16 @@
 (use-package ivy-rich
   :ensure t
   :after ivy
-  :init (ivy-rich-mode 1))
+  :config (ivy-rich-mode 1))
 
 (use-package all-the-icons-ivy-rich
   :ensure t
-  :init (all-the-icons-ivy-rich-mode 1))
+  :config (all-the-icons-ivy-rich-mode 1))
 
 (use-package which-key
   :ensure t
   :diminish which-key-mode
-  :init (which-key-mode 1))
+  :config (which-key-mode 1))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -442,20 +449,6 @@
 (use-package rainbow-mode
   :ensure t
   :hook (prog-mode . rainbow-mode))
-
-(use-package doom-modeline
-  :ensure t
-  :init
-  (doom-modeline-mode 1)
-  (setq doom-modeline-lsp t))
-
-(use-package doom-themes
-  :ensure t
-  :init
-  (load-theme 'doom-material-dark t)
-  :config
-  (setq doom-themes-enable-bold t
-        doom-themes-enable-italic t))
 
 (use-package all-the-icons
   :ensure t)
@@ -511,7 +504,8 @@
 
 (use-package ace-window
   :ensure t
-  :init (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
               aw-char-position 'left
               aw-ignore-current nil
               aw-leading-char-style 'char
