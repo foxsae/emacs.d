@@ -40,8 +40,8 @@
       ;; set sbcl for common lisp
       inferior-lisp-program (executable-find "sbcl")
       ;; note: this is the linux trash, not the windows trash
-      delete-by-moving-to-trash t
-)
+      delete-by-moving-to-trash t)
+
 
 ;; Keep custom settings separate
 (setq custom-file "~/.emacs.d/custom.el")
@@ -126,6 +126,7 @@
 (setq locale-coding-system 'utf-8)
 (setq default-file-name-coding-system 'utf-8)
 (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRGIN))
+(setenv "LC_CTYPE" "en_US.UTF-8")
 
 ;; Setup Use Package
 (require 'package)
@@ -259,8 +260,8 @@
   (setq visual-fill-column-center-text t)
   :hook
   (nov-mode . visual-line-mode)
-  (nov-mode . visual-fill-column-mode)
-  )
+  (nov-mode . visual-fill-column-mode))
+
 
 ;; elfeed news reader feeds
 (setq elfeed-feeds
@@ -399,17 +400,18 @@
 (use-package ivy
   :ensure t
   :diminish
-  :bind (("C-s" . swiper)
-         ("C-r" . swiper)
-         ("C-c C-r" . ivy-resume)
-         :map ivy-minibuffer-map
-         ("TAB" . ivy-alt-done)
-         ("C-n" . ivy-next-line)
-         ("C-p" . ivy-previous-line)
-         :map ivy-switch-buffer-map
-         ("C-p" . ivy-previous-line)
-         :map ivy-reverse-i-search-map
-         ("C-p" . ivy-previous-line))
+  :bind
+  (("C-s" . swiper)
+   ("C-r" . swiper)
+   ("C-c C-r" . ivy-resume)
+   :map ivy-minibuffer-map
+   ("TAB" . ivy-alt-done)
+   ("C-n" . ivy-next-line)
+   ("C-p" . ivy-previous-line)
+   :map ivy-switch-buffer-map
+   ("C-p" . ivy-previous-line)
+   :map ivy-reverse-i-search-map
+   ("C-p" . ivy-previous-line))
   :config
   (setq ivy-use-virtual-buffers t)
   (setq enable-recursive-minibuffers t)
@@ -418,12 +420,13 @@
 ;; use ALT-o when in the minibuffer for extra commands
 (use-package counsel
   :after ivy
-  :bind (("M-x" . counsel-M-x)
-         ("C-x b" . counsel-ibuffer)
-         ("C-x C-b" . counsel-ibuffer)
-         ("C-x C-f" . counsel-find-file)
-         :map minibuffer-local-map
-         ("C-r" . 'councel-minibuffer-history))
+  :bind
+  (("M-x" . counsel-M-x)
+   ("C-x b" . counsel-ibuffer)
+   ("C-x C-b" . counsel-ibuffer)
+   ("C-x C-f" . counsel-find-file)
+   :map minibuffer-local-map
+   ("C-r" . 'councel-minibuffer-history))
   :config
   (setq ivy-initial-inputs-alist nil)
   (counsel-mode 1))
@@ -530,13 +533,21 @@
     (setq eshell-visual-commands '("htop" "zsh" "vim")))
   (eshell-git-prompt-use-theme 'powerline))
 
+;; load the common lisp help system
+(load "~/quicklisp/clhs-use-local.el" t)
+
 (use-package slime
   :ensure t
+  :init (setq inferior-lisp-program "sbcl")
   :config
-  (slime-setup '(slime-fancy slime-company))
-  (setq slime-lisp-implementation '((sbcl ("sbcl")))
-        slime-default-lisp 'sbcl
-        slime-contribs '(slime-fancy)))
+  (slime-setup '(slime-fancy slime-company slime-quicklisp slime-asdf))
+  :hook
+  (slime-mode . slime-company)
+  (slime-mode . (lambda ()
+                  (load (expand-file-name
+                         "~/quicklisp/slime-helper.el"))
+                  (add-to-list 'slime-contribs 'slime-fancy)
+                  (add-to-list 'slime-contribs 'inferior-lisp))))
 
 (use-package slime-company
   :ensure t
@@ -582,5 +593,17 @@
 
 (use-package dashboard
   :ensure t
-  :config
-  (dashboard-setup-startup-hook))
+  :config (dashboard-setup-startup-hook))
+
+(use-package page-break-lines
+  :ensure t
+  :config (global-page-break-lines-mode))
+
+;;(use-package parinfer-rust-mode
+;;  :hook (emacs-lisp-mode . parinfer-rust-mode)
+;;  :init (setq parinfer-rust-auto-download t))
+
+(use-package puni
+  :ensure t
+  :init (puni-global-mode)
+  :hook (term-mode . puni-disable-puni-mode))
