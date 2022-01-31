@@ -34,17 +34,15 @@
 (setq create-lockfiles nil)
 ;; kill the entire line, including /n
 (setq kill-whole-line t)
-;; make display 100 characters wide
-(setq set-fill-column 100)
-;; use python3
+;; use ipython3 as python shell
 (setq python-shell-interpreter "ipython3")
-;; needed for ipython to run properly
+;; flags needed for ipython to run properly
 (setq python-shell-interpreter-args "--simple-prompt -i")
-;; use ssh
+;; use ssh for tramp
 (setq tramp-default-method "ssh")
-;; set sbcl for common lisp
+;; set SBCL for common lisp
 (setq inferior-lisp-program (executable-find "sbcl"))
-;; note: this is the linux trash, not the windows trash
+;; note: this is the linux trash, not the windows trash, I think...
 (setq delete-by-moving-to-trash t)
 ;; make cursor the width of the character
 (setq x-stretch-cursor t)
@@ -86,7 +84,7 @@
 (setq-default tab-width 4)
 (setq-default nuke-trailing-whitespace-p t)
 
-;; Cleanup whitespace
+;; Cleanup white space
 (add-hook 'before-save-hook 'whitespace-cleanup)
 (add-hook 'before-save-hook
           (lambda() (delete-trailing-whitespace)))
@@ -112,18 +110,16 @@
 
 ;; Setup Use Package
 (require 'package)
-
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
-
 (package-initialize)
 (unless package-archive-contents
   (package-refresh-contents))
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-;; Better history
+;; Better history settings
 (setq savehist-file "~/.emacs.d/savehist")
 (savehist-mode 1)
 (setq history-length t
@@ -134,11 +130,11 @@
         search-ring
         regexp-search-ring))
 
-;; put auto-save files into emacs dir
+;; put auto-save files into Emacs directory
 (setq auto-save-file-name-transforms
       '((".*" "~/.emacs.d/auto-save/" t)))
 
-;; put backup files in the same place
+;; put backup files into Emacs directory
 (setq backup-directory-alist
       '(("." . "~/.emacs.d/backup/"))
       backup-by-copying 1
@@ -225,10 +221,12 @@
   (setq ispell-program-name "aspell"))
 
 (use-package flyspell-correct
+  :ensure t
   :after flyspell
   :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
 
 (use-package flyspell-correct-ivy
+  :ensure t
   :after flyspell-correct)
 
 ;; Turn on company-mode globally, then off for some modes
@@ -253,6 +251,22 @@
   ;; set the face manually to fixed-width
   (company-tooltip ((t (:family "Source Code Pro")))))
 
+(use-package pdf-tools
+  :ensure t
+  :pin manual
+  :magic ("%PDF" . pdf-view-mode)
+  :config
+  (pdf-tools-install)
+  (setq-default pdf-view-display-size 'fit-page)
+  (setq pdf-annot-activate-created-annotations t))
+
+(use-package markdown-mode
+  :ensure t
+  :mode (("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode)
+         ("README\\.md\\'" . gfm-mode))
+  :init (setq markdown-command "cmark"))
+
 ;; nov ebook reader
 (use-package nov
   :ensure t
@@ -276,7 +290,7 @@
         ("https://smbc-comics.com/rss" webcomic)
         ("https://www.qwantz.com/rssfeed.php" webcomic)))
 
-;; info colors
+;; info colours
 (add-hook 'Info-selection-hook 'info-colors-fontify-node)
 
 ;; for editing .yml files
@@ -295,22 +309,28 @@
   --group-directories-first")))
 
 ;; use ! to call `xdg-open` on any file, this opens the file
-;; with the default OS application for that file
+;; with the default OS application: eg. vlc for movies, lollypop for
+;; music, etc.
 (use-package dired-x
   :ensure nil
   :after dired
   :config
-  (setq dired-guess-shell-alist-user '(("" "xdg-open"))))
+  ;; with these commands Emacs doesn't freeze when calling an external
+  ;; application plus the application will continue to run even if
+  ;; Emacs is closed.
+  (setq dired-guess-shell-alist-user '(("" "setsid -w nohup xdg-open &"))))
 
 ;; hide dot files by default, H to toggle visibility
 (use-package dired-hide-dotfiles
   :ensure t
+  :after dired
   :hook (dired-mode . dired-hide-dotfiles-mode)
   :bind (:map dired-mode-map ("H" . dired-hide-dotfiles-mode)))
 
 ;; nicer icons for dired
 (use-package all-the-icons-dired
   :ensure t
+  :after dired
   :hook (dired-mode . all-the-icons-dired-mode))
 
 ;; loads when dired loads, remaps to use dired-single
@@ -318,14 +338,15 @@
   (interactive)
   (define-key dired-mode-map [remap dired-find-file]
               'dired-single-buffer)
-  (define-key dired-mode-map [remap
-                              dired-mousej-find-file-other-window]
+  (define-key dired-mode-map [remap dired-mouse-find-file-other-window]
               'dired-single-buffer-mouse)
-  (define-key dired-mode-map [remap dired-up-directory] ' dired-single-up-directory))
+  (define-key dired-mode-map [remap dired-mouse-find-file] 'dired-single-buffer-mouse)
+  (define-key dired-mode-map [remap dired-up-directory] 'dired-single-up-directory))
 
 ;; turn dired into a single buffer application
 (use-package dired-single
   :ensure t
+  :after dired
   :hook
   (dired-mode . ac-dired-init))
 
@@ -335,9 +356,7 @@
   :hook
   (org-mode . font-lock-mode) ; toggle syntax highlighting
   (org-mode . visual-line-mode) ; toggle visual line editing
-  :bind
-  (:map org-mode-map
-        ("C-c s" . org-schedule))
+  :bind (:map org-mode-map ("C-c s" . org-schedule))
   :config
   (setq org-startup-indented t) ; all headings are indented
   (setq org-log-done 'time) ; add time when task in complete
@@ -361,11 +380,22 @@
   :hook (org-mode . org-bullets-mode)
   :config (setq org-bullets-bullet-list '("◉" "⁑" "⁂" "❖" "✮" "✱" "✸")))
 
+(with-eval-after-load 'org
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((lisp . t)
+     (python . t)
+     (sqlite . t)
+     (latex . t)
+     (shell . t))))
+
 ;; wrap lines at column-width rather than at windows edge
 (use-package visual-fill-column
   :ensure t
   :config
-  (setq-default visual-fill-column-width 100)
+  (setq-default fill-coumn 90)
+  (setq-default fill-column-width 90)
+  (setq-default visual-fill-column-width 90)
   (setq-default visual-fill-column-center-text t)
   (setq-default visual-fill-column-enable-sensible-window-split t)
   (setq-default visual-fill-column-fringes-outside-margins t)
@@ -377,16 +407,7 @@
   :ensure t
   :hook
   ((org-mode text-mode prog-mode) . auto-fill-mode)
-  ((org-mode text-mode prog-mode) . mixed-pitch-mode))
-
-(with-eval-after-load 'org
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((lisp . t)
-     (python . t)
-     (sqlite . t)
-     (latex . t)
-     (shell . t))))
+  ((org-mode text-mode) . mixed-pitch-mode))
 
 (use-package ivy
   :ensure t
@@ -433,7 +454,6 @@
 
 (use-package magit
   :ensure t
-  :bind (("C-x g" . magit-status))
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
@@ -504,7 +524,7 @@
                   (add-to-list 'slime-contribs 'inferior-lisp))))
 
 (use-package slime-company
-  :ensure t
+ :ensure t
   :after (slime company)
   :config
   (setq slime-company-completion 'fuzzy
@@ -523,6 +543,15 @@
   :ensure t
   :hook ((prog-mode sgml-mode nxml-mode tex-mode) . puni-mode))
 
+;; credit to Greg Own for the rg snippet which modifies grep-find to use
+;; ripgrep, by default it checks the top level directory if inside a
+;; git repository or else the pwd.
+(use-package grep
+  :ensure nil
+  :config
+  (grep-apply-setting 'grep-find-command
+                      '("rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)" . 27)))
+
 ;; tb-keycast-mode setup, not in melpa yet
 (add-to-list 'load-path "~/Source/tb-keycast")
 (require 'tb-keycast)
@@ -534,24 +563,7 @@
                     :foreground "#88FFAA"
                     :slant 'normal
                     :weight 'bold)
-
 (setq tb-keycast-ignore '(minibuffer-cmd))
-
-(use-package pdf-tools
-  :ensure t
-  :pin manual
-  :magic ("%PDF" . pdf-view-mode)
-  :config
-  (pdf-tools-install)
-  (setq-default pdf-view-display-size 'fit-page)
-  (setq pdf-annot-activate-created-annotations t))
-
-(use-package markdown-mode
-  :ensure t
-  :mode (("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode)
-         ("README\\.md\\'" . gfm-mode))
-  :init (setq markdown-command "cmark"))
 
 ;; hot keys
 (global-set-key (kbd "<f5>") 'ac-reload-init)
@@ -562,6 +574,7 @@
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'counsel-org-capture)
 (global-set-key (kbd "C-c w") 'elfeed)
+(global-set-key (kbd "C-x g") 'magit-status)
 (global-set-key (kbd "M-<f11>") 'toggle-frame-fullscreen)
 (global-set-key (kbd "C-c i d") 'ac-insert-date)
 (global-set-key (kbd "C-c i t") 'ac-insert-time)
@@ -573,12 +586,13 @@
 (global-set-key (kbd "C-h C") 'helpful-command)
 (global-set-key (kbd "M-o") 'ace-window)
 (global-set-key (kbd "C-s") 'swiper)
+(global-set-key (kbd "C-r") 'counsel-rg)
+(global-set-key (kbd "C-c C-g") 'grep-find)
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "C-x C-b") 'counsel-switch-buffer)
 (global-set-key (kbd "C-x C-j") 'dired-jump)
-;(global-set-key (kbd "C-c z") 'company-show-location)
 
-;; turn off
+;; turn off suspend functionality
 (global-unset-key (kbd "C-z"))
 (global-unset-key (kbd "C-x C-z"))
 
