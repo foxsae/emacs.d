@@ -333,8 +333,8 @@
   :after dired
   :hook (dired-mode . all-the-icons-dired-mode))
 
-;; loads when dired loads, remaps to use dired-single
 (defun ac-dired-init ()
+  "Remap dired functions to use dired-single equivalents"
   (interactive)
   (define-key dired-mode-map [remap dired-find-file]
               'dired-single-buffer)
