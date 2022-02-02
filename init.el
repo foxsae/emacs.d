@@ -6,12 +6,12 @@
 
 (setq auth-sources '("~/.authinfo.gpg"))
 
-;; Doom-emacs cons trick
-;; disable gcs during startup
-(setq gc-cons-threshold most-positive-fixnum
-      gc-cons-percentage 0.6)
+;; Doom garbage collection trick, disables gcs during startup
+(setq gc-cons-threshold most-positive-fixnum)
+(setq gc-cons-percentage 0.6)
 
-(setq inhibit-startup-message t); turn off emacs startup file
+;; turn off startup message in favour of custom setting
+(setq inhibit-startup-message t)
 ;; as opposed to an audio-beep
 (setq visible-bell t)
 ;;save clipboard strings to kill ring before replacing
@@ -86,8 +86,7 @@
 
 ;; Cleanup white space
 (add-hook 'before-save-hook 'whitespace-cleanup)
-(add-hook 'before-save-hook
-          (lambda() (delete-trailing-whitespace)))
+(add-hook 'before-save-hook (lambda() (delete-trailing-whitespace)))
 
 (defun ac-remove-dos-eol ()
   "Do not show ^M in files containing mixed line endings."
@@ -122,25 +121,20 @@
 ;; Better history settings
 (setq savehist-file "~/.emacs.d/savehist")
 (savehist-mode 1)
-(setq history-length t
-      history-delete-duplicates t
-      savehist-save-minibuffer-history 1)
-(setq savehist-additional-variables
-      '(kill-ring
-        search-ring
-        regexp-search-ring))
+(setq history-length t)
+(setq history-delete-duplicates t)
+(setq savehist-save-minibuffer-history 1)
+(setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
 
 ;; put auto-save files into Emacs directory
-(setq auto-save-file-name-transforms
-      '((".*" "~/.emacs.d/auto-save/" t)))
+(setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save/" t)))
 
 ;; put backup files into Emacs directory
-(setq backup-directory-alist
-      '(("." . "~/.emacs.d/backup/"))
-      backup-by-copying 1
-      delete-old-versions -1
-      version-control t
-      vc-make-backup-files t)
+(setq backup-directory-alist '(("." . "~/.emacs.d/backup/")))
+(setq backup-by-copying 1)
+(setq delete-old-versions -1)
+(setq version-control t)
+(setq vc-make-backup-files t)
 
 ;; Turn on line/column numbers everywhere
 (column-number-mode)
@@ -162,17 +156,17 @@
   "Kill up to, but not including ARGth occurance of CHAR." t)
 
 (defun ac-insert-date()
-  ;; Make inserting the date easier C-c i d
+  "Make inserting the date easier C-c i d"
   (interactive)
   (insert (format-time-string "%x")))
 
 (defun ac-insert-time()
-  ;; Make inserting the time easier C-c i t
+  "Make inserting the time easier C-c i t"
   (interactive)
   (insert (format-time-string "%X")))
 
 (defun ac-reload-init ()
-  ;; Make reloading ~/.emacs.d/init.el easier <f6>
+  "Make reloading ~/.emacs.d/init.el easier <f6>"
   (interactive)
   (load-file "~/.emacs.d/init.el"))
 
@@ -201,10 +195,6 @@
 ;; spell and grammar check tool
 (use-package langtool
   :ensure t
-  :bind
-  (("C-c h" . 'langtool-check) ; starts the checker
-   ("C-c j" . 'langtool-correct-buffer) ; corrects the buffer
-   ("C-c k" . 'langtool-check-done)) ; ends the checker
   :config
   (setq langtool-language-tool-jar
         "~/Source/LanguageTool-5.6/languagetool-commandline.jar")
@@ -214,22 +204,23 @@
 ;; more spell checking
 (use-package flyspell
   :ensure nil
+  :config (setq ispell-program-name "aspell")
   :hook
   (text-mode . flyspell-mode)
-  (prog-mode . flyspell-prog-mode)
-  :config
-  (setq ispell-program-name "aspell"))
+  (prog-mode . flyspell-prog-mode))
 
+;; even more spell checking
 (use-package flyspell-correct
   :ensure t
   :after flyspell
   :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
 
+;; yet even more spell checking
 (use-package flyspell-correct-ivy
   :ensure t
   :after flyspell-correct)
 
-;; Turn on company-mode globally, then off for some modes
+;; Good auto completion once it is setup properly
 (use-package company
   :ensure t
   :bind
@@ -237,19 +228,17 @@
         ("C-n" . company-select-next)
         ("C-p" . company-select-previous))
   :config
-  (global-company-mode t)
   (setq company-show-quick-access 'left)
   (setq company-backends '((company-capf company-dabbrev-code)))
   (setq company-tooltip-flip-when-above t)
-  (setq company-global-modes '(not erc-mode message-mode
-                                   eshell-mode))
   :custom
   ;;use M-[asdfg] keys for quick completions
   (company-quick-access-keys '("a" "s" "d" "f" "g"))
   (company-quick-access-modifier 'meta)
   :custom-face
   ;; set the face manually to fixed-width
-  (company-tooltip ((t (:family "Source Code Pro")))))
+  (company-tooltip ((t (:family "Source Code Pro"))))
+  :hook (prog-mode . company-mode))
 
 (use-package pdf-tools
   :ensure t
@@ -290,10 +279,10 @@
         ("https://smbc-comics.com/rss" webcomic)
         ("https://www.qwantz.com/rssfeed.php" webcomic)))
 
-;; info colours
+;; make info documentation more colourful
 (add-hook 'Info-selection-hook 'info-colors-fontify-node)
 
-;; for editing .yml files
+;; for editing mode for .yml files
 (use-package yaml-mode
   :ensure t
   :init (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode)))
@@ -301,12 +290,12 @@
 ;; use dired-single for dired
 (use-package dired
   :ensure nil
-  :hook (dired-mode . auto-revert-mode) ;auto refresh dired when file changes
   :bind
-  (:map dired-mode-map ("f" . dired-single-buffer))
-  (:map dired-mode-map ("b" . dired-single-up-directory))
-  :custom ((dired-listing-switches "-agho
-  --group-directories-first")))
+  (:map dired-mode-map
+        ("f" . dired-single-buffer)
+        ("b" . dired-single-up-directory))
+  :custom ((dired-listing-switches "-agho --group-directories-first"))
+  :hook (dired-mode . auto-revert-mode)) ;auto refresh on file change
 
 ;; use ! to call `xdg-open` on any file, this opens the file
 ;; with the default OS application: eg. vlc for movies, lollypop for
@@ -324,38 +313,40 @@
 (use-package dired-hide-dotfiles
   :ensure t
   :after dired
-  :hook (dired-mode . dired-hide-dotfiles-mode)
-  :bind (:map dired-mode-map ("H" . dired-hide-dotfiles-mode)))
-
-;; nicer icons for dired
-(use-package all-the-icons-dired
-  :ensure t
-  :after dired
-  :hook (dired-mode . all-the-icons-dired-mode))
-
-(defun ac-dired-init ()
-  "Remap dired functions to use dired-single equivalents"
-  (interactive)
-  (define-key dired-mode-map [remap dired-find-file]
-              'dired-single-buffer)
-  (define-key dired-mode-map [remap dired-mouse-find-file-other-window]
-              'dired-single-buffer-mouse)
-  (define-key dired-mode-map [remap dired-mouse-find-file] 'dired-single-buffer-mouse)
-  (define-key dired-mode-map [remap dired-up-directory] 'dired-single-up-directory))
+  :bind (:map dired-mode-map ("H" . dired-hide-dotfiles-mode))
+  :hook (dired-mode . dired-hide-dotfiles-mode))
 
 ;; turn dired into a single buffer application
 (use-package dired-single
   :ensure t
   :after dired
-  :hook
-  (dired-mode . ac-dired-init))
+  :bind
+  (:map dired-mode-map
+        ([remap dired-find-file] . dired-single-buffer)
+        ([remap dired-mouse-find-file-other-window] .
+         dired-single-buffer-mouse)
+        ([remap dired-mouse-find-file] . dired-single-buffer-mouse)
+        ([remap dired-up-directory] . dired-single-up-directory)))
+
+(use-package projectile
+  :ensure t
+  :init (projectile-mode +1)
+  :bind (:map projectile-mode-map ("C-c p" . projectile-command-map))
+  :config
+  (setq projectile-project-search-path '("~/Projects/"))
+  (setq projectile-switch-project-action #'projectile-dired)
+  :custom (projectile-completion-system 'ivy))
+
+(use-package counsel-projectile
+  :ensure t
+  :config (counsel-projectile-mode))
+
+(use-package rg
+  :ensure t)
 
 ;; Org mode configuration start
 (use-package org
   :ensure t
-  :hook
-  (org-mode . font-lock-mode) ; toggle syntax highlighting
-  (org-mode . visual-line-mode) ; toggle visual line editing
   :bind (:map org-mode-map ("C-c s" . org-schedule))
   :config
   (setq org-startup-indented t) ; all headings are indented
@@ -368,17 +359,29 @@
   (setq org-refile-use-outline-path 'file)
   (setq org-outline-path-complete-in-steps nil)
   (setq org-todo-keywords
-        '((sequence "IN-PROGRESS" "TODO" "|" "CANCELLED" "DONE")))
+        '((sequence "IN-PROGRESS" "TODO" "REMINDER" "|" "CANCELLED" "DONE")))
   (setq org-todo-keyword-faces
         '(("TODO" :foreground "red" :weight bold)
           ("IN-PROGRESS" :foreground "orange" :weight bold)
+          ("REMINDER" :foreground "pink" :weight bold)
           ("DONE" :foreground "green" :weight bold)
-          ("CANCELED" :foreground "green" :weight bold))))
+          ("CANCELED" :foreground "green" :weight bold)))
+  :hook
+  (org-mode . font-lock-mode) ; toggle syntax highlighting
+  (org-mode . visual-line-mode)) ; toggle visual line editing
+
+(setq org-capture-templates
+      '(("t" "Todo" entry
+         (file+headline "~/Org/Agenda.org" "Tasks")
+         "** TODO %?\n %i\n %a")
+        ("j" "Journal Entry" entry
+         (file+olp+datetree "~/Org/Journal.org")
+         "**** %i%?\n")))
 
 (use-package org-bullets
   :ensure t
-  :hook (org-mode . org-bullets-mode)
-  :config (setq org-bullets-bullet-list '("◉" "⁑" "⁂" "❖" "✮" "✱" "✸")))
+  :config (setq org-bullets-bullet-list '("◉" "⁑" "⁂" "❖" "✮" "✱" "✸"))
+  :hook (org-mode . org-bullets-mode))
 
 (with-eval-after-load 'org
   (org-babel-do-load-languages
@@ -429,14 +432,18 @@
   :after ivy
   :config (ivy-rich-mode t))
 
+(use-package all-the-icons
+  :ensure t)
+
 (use-package all-the-icons-ivy-rich
   :ensure t
   :config (all-the-icons-ivy-rich-mode t))
 
-(use-package which-key
+;; nicer icons for dired
+(use-package all-the-icons-dired
   :ensure t
-  :diminish
-  :config (which-key-mode t))
+  :after dired
+  :hook (dired-mode . all-the-icons-dired-mode))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -446,8 +453,10 @@
   :ensure t
   :hook (prog-mode . rainbow-mode))
 
-(use-package all-the-icons
-  :ensure t)
+(use-package which-key
+  :ensure t
+  :diminish
+  :config (which-key-mode t))
 
 (use-package helpful
   :ensure t)
@@ -489,23 +498,25 @@
   :hook (term-mode . eterm-256color-mode))
 
 (defun ac-configure-eshell()
-  ;; Personal Eshell settings
+  "Set eshell history to 10k, also ignore duplication"
   (add-hook 'eshell-pre-command-hook 'eshell-save-some-history)
-  (add-to-list 'eshell-output-filter-functions
-               'eshell-truncate-buffer)
-  (setq eshell-history-size 10000
-        eshell-buffer-maximum-lines 10000
-        eshell-hist-ignoredups t
-        eshell-scroll-to-bottom-on-input t))
+  (add-to-list 'eshell-output-filter-functions 'eshell-truncate-buffer)
+  (setq eshell-history-size 10000)
+  (setq eshell-buffer-maximum-lines 10000)
+  (setq eshell-hist-ignoredups t)
+  (setq eshell-scroll-to-bottom-on-input t))
 
 (use-package eshell
   :ensure nil
-  :hook (eshell-first-time-mode . ac-configure-eshell)
   :config
   (with-eval-after-load 'esh-opt
-    (setq eshell-destroy-buffer-when-process-dies t)
-    (setq eshell-visual-commands '("htop" "zsh" "vim")))
-  (eshell-git-prompt-use-theme 'powerline))
+    (setq eshell-destroy-buffer-when-process-dies t))
+  (eshell-git-prompt-use-theme 'powerline)
+  :hook (eshell-first-time-mode . ac-configure-eshell))
+
+(use-package eshell-git-prompt
+  :ensure t
+  :after eshell)
 
 ;; load local version of Common Lisp Hyper Spec
 (load "~/quicklisp/clhs-use-local.el" t)
@@ -524,7 +535,7 @@
                   (add-to-list 'slime-contribs 'inferior-lisp))))
 
 (use-package slime-company
- :ensure t
+  :ensure t
   :after (slime company)
   :config
   (setq slime-company-completion 'fuzzy
@@ -549,8 +560,7 @@
 (use-package grep
   :ensure nil
   :config
-  (grep-apply-setting 'grep-find-command
-                      '("rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)" . 27)))
+  (grep-apply-setting 'grep-find-command '("rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)" . 27)))
 
 ;; tb-keycast-mode setup, not in melpa yet
 (add-to-list 'load-path "~/Source/tb-keycast")
@@ -568,9 +578,7 @@
 ;; hot keys
 (global-set-key (kbd "<f5>") 'ac-reload-init)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
-(global-set-key (kbd "C-s") 'isearch-forward-regexp)
-(global-set-key (kbd "C-r") 'isearch-backward-regexp)
-(global-set-key (kbd "C-c l") 'org-store-line)
+(global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'counsel-org-capture)
 (global-set-key (kbd "C-c w") 'elfeed)
@@ -587,10 +595,13 @@
 (global-set-key (kbd "M-o") 'ace-window)
 (global-set-key (kbd "C-s") 'swiper)
 (global-set-key (kbd "C-r") 'counsel-rg)
-(global-set-key (kbd "C-c C-g") 'grep-find)
+(global-set-key (kbd "C-c C-g") 'grep-find) ; powered by ripgrep
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "C-x C-b") 'counsel-switch-buffer)
 (global-set-key (kbd "C-x C-j") 'dired-jump)
+(global-set-key (kbd "C-c h") 'langtool-check) ; starts the checker
+(global-set-key (kbd "C-c j")  'langtool-correct-buffer) ; corrects the buffer
+(global-set-key (kbd "C-c k") 'langtool-check-done) ; ends the checker
 
 ;; turn off suspend functionality
 (global-unset-key (kbd "C-z"))
