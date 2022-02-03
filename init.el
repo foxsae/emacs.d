@@ -233,12 +233,23 @@
 
 (use-package pdf-tools
   :ensure t
-  :pin manual
   :magic ("%PDF" . pdf-view-mode)
   :config
   (pdf-tools-install)
   (setq-default pdf-view-display-size 'fit-page)
-  (setq pdf-annot-activate-created-annotations t))
+  (setq pdf-annot-activate-created-annotations t)
+  :bind
+  (:map pdf-view-mode-map
+        ("g" . pdf-view-first-page)
+        ("G" . pdf-view-last-page)
+        ("n" . pdf-view-next-page)
+        ("p" . pdf-view-previous-page)
+        ("e" . pdf-view-goto-page)
+        ("u" . pdf-view-revert-buffer)
+        ("s" . pdf-occur)
+        ("al" . pdf-annot-list-annotations)
+        ("at" . pdf-annot-add-text-annotation)
+        ("ad" . pdf-annot-delete)))
 
 (use-package markdown-mode
   :ensure t
