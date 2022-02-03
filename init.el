@@ -95,17 +95,8 @@
   (aset buffer-display-table ?\^M []))
 (add-hook 'text-mode-hook 'ac-remove-dos-eol)
 
-;; Set all-the-things to UTF-8
-(set-language-environment 'utf-8)
-(set-terminal-coding-system 'utf-8)
-(set-selection-coding-system 'utf-8)
-(set-keyboard-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
-(prefer-coding-system 'utf-8)
-(setq locale-coding-system 'utf-8)
-(setq default-file-name-coding-system 'utf-8)
-(setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRGIN))
-(setenv "LC_CTYPE" "en_US.UTF-8")
+;; Set environment to Canadian English, eh?
+(set-locale-environment "en_CA.UTF-8")
 
 ;; Setup Use Package
 (require 'package)
@@ -467,10 +458,6 @@
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
 (use-package magit-popup
-  :ensure t
-  :after magit)
-
-(use-package forge
   :ensure t
   :after magit)
 
